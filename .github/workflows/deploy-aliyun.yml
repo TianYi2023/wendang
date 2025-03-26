@@ -1,0 +1,36 @@
+name: Deploy VuePress to Aliyun OSS
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Build VuePress
+        run: npm run docs:build
+        
+      - name: Configure Aliyun CLI
+        run: |
+          mkdir -p ~/.ossutilconfig
+          echo "[Credentials]" > ~/.ossutilconfig
+          echo "language=EN" >> ~/.ossutilconfig
+          echo "accessKeyID=${{ secrets.ALIYUN_ACCESS_KEY_ID }}" >> ~/.ossutilconfig
+          echo "accessKeySecret=${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}" >> ~/.ossutilconfig
+          echo "endpoint=oss-cn-beijing.aliyuncs.com" >> ~/.ossutilconfig
+          
+      - name: Deploy to Aliyun OSS
+        run: |
+          ossutil cp -r src/.vuepress/dist/ oss://tianyi234/ --update
+          ossutil cp src/README.md oss://tianyi234/README.md --update
